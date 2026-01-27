@@ -1,6 +1,8 @@
+import { Navbar } from "@/components/Navbar";
 import { useEffect, useRef, useState } from "react";
 
 export function WorkingArea() {
+  const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
@@ -12,7 +14,7 @@ export function WorkingArea() {
   });
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    const canvas = canvasRef.current!; //! i know this is not null
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -22,8 +24,10 @@ export function WorkingArea() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+
+  //temporary
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    const canvas = canvasRef.current!; 
     const ctx = canvas.getContext("2d")!;
     draw(ctx);
   }, [camera]);
@@ -40,10 +44,10 @@ export function WorkingArea() {
     drawGrid(ctx);
   };
 
+  //temporary
   const drawGrid = (ctx: CanvasRenderingContext2D) => {
     const size = 40;
-    ctx.strokeStyle = "#222";
-
+    ctx.strokeStyle = "#f5f5f5";
     const range = 3000;
     for (let x = -range; x <= range; x += size) {
       ctx.beginPath();
@@ -62,11 +66,13 @@ export function WorkingArea() {
 
   const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     dragging.current = true;
+    setIsDragging(true);
     last.current = { x: e.clientX, y: e.clientY };
   };
 
   const onMouseUp = () => {
     dragging.current = false;
+    setIsDragging(false);
   };
 
   const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -95,6 +101,8 @@ export function WorkingArea() {
   };
 
   return (
+    <div>
+      <Navbar/>
     <canvas
       ref={canvasRef}
       onMouseDown={onMouseDown}
@@ -102,9 +110,8 @@ export function WorkingArea() {
       onMouseLeave={onMouseUp}
       onMouseMove={onMouseMove}
       onWheel={onWheel}
-      style={{
-        cursor: dragging.current ? "grabbing" : "grab",
-      }}
+      className={`${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     />
+    </div>
   );
 }
