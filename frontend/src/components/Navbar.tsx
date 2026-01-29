@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
+import type { Dispatch, SetStateAction } from "react";
 
-const ToolButton = ({ children }: { children: React.ReactNode }) => (
+const ToolButton = ({ children , handleClick}: { children: React.ReactNode; handleClick?: void}) => (
   <button
     className="
       p-2 rounded-md
@@ -25,12 +26,20 @@ const ToolButton = ({ children }: { children: React.ReactNode }) => (
       active:bg-gray-200
       transition cursor-pointer
     "
+    
   >
     {children}
   </button>
 );
 
-export function Navbar() {
+export function Navbar(
+  {
+    setGrab
+  } :
+  {
+    setGrab: Dispatch<SetStateAction<boolean>>
+  }
+) {
   return (
     <div
       className="
@@ -47,7 +56,6 @@ export function Navbar() {
         </ToolButton>
       </div>
 
-        {/* Center: Tools */}
       <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg shadow-lg mt-2">
         <ToolButton><Lock size={18} /></ToolButton>
         <Separator orientation="vertical" className="h-6 mx-1"/>
@@ -68,7 +76,6 @@ export function Navbar() {
         <ToolButton><ToolCase size={18} /></ToolButton>
       </div>
 
-      {/* Right: Actions */}
       <div className="flex items-center gap-2">
         <Button size="sm" className="bg-blue-300 hover:bg-blue-400 cursor-pointer">Share</Button>
       </div>

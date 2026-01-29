@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 export function WorkingArea() {
   const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [grabber, setGrabber] = useState(false);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
 
@@ -14,7 +15,7 @@ export function WorkingArea() {
   });
 
   useEffect(() => {
-    const canvas = canvasRef.current!; //! i know this is not null
+    const canvas = canvasRef.current!; //! means i know this is not null
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -102,7 +103,7 @@ export function WorkingArea() {
 
   return (
     <div>
-      <Navbar/>
+      <Navbar setGrab={setGrabber}/>
     <canvas
       ref={canvasRef}
       onMouseDown={onMouseDown}
