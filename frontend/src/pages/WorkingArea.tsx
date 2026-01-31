@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 
 export function WorkingArea() {
@@ -7,12 +8,23 @@ export function WorkingArea() {
   const [grabber, setGrabber] = useState(false);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
+  const [textBox, setTextBox] = useState({ x: 0, y: 0, visible: false });
+  const [textBoxContent, setTextBoxContent] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
     zoom: 1,
   });
+
+  useEffect(() => {
+    if (textBox.visible) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [textBox.visible])
 
   useEffect(() => {
     const canvas = canvasRef.current!; //! means i know this is not null
@@ -118,18 +130,50 @@ export function WorkingArea() {
     }
   };
 
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if(grabber) return;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setTextBox({
+      visible: true,
+      x,
+      y
+    })
+  }
+
   return (
     <div>
       <Navbar setGrab={setGrabber} />
-      <canvas
-        ref={canvasRef}
-        onMouseDown={onMouseDown}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onMouseMove={onMouseMove}
-        onWheel={onWheel}
-        className={`${grabber ? `${isDragging ? "cursor-grabbing" : "cursor-grab"}` : ""}`}
-      />
+      <div>
+        <canvas
+          ref={canvasRef}
+          onMouseDown={onMouseDown}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          onMouseMove={onMouseMove}
+          onWheel={onWheel}
+          onDoubleClick={handleDoubleClick}
+          className={`${grabber ? `${isDragging ? "cursor-grabbing" : "cursor-grab"}` : ""}`}
+        />
+      </div>
+      {
+        textBox.visible && (
+          <Textarea
+            ref={inputRef}
+            value={textBoxContent}
+            onChange={(e) => setTextBoxContent(e.target.value)}
+            onBlur={() => { (textBoxContent === "") ? setTextBox({ ...textBox, visible: false }) : null }}
+            style={{
+              position: "absolute",
+              left: textBox.x,
+              top: textBox.y,
+            }}
+            className="px-2 py-1 text-sm border-none w-auto resize-none"
+          />
+        )
+      }
     </div>
   );
 }
