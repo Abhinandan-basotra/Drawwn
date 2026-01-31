@@ -28,7 +28,7 @@ export function WorkingArea() {
 
   //temporary
   useEffect(() => {
-    const canvas = canvasRef.current!; 
+    const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     draw(ctx);
   }, [camera]);
@@ -66,6 +66,7 @@ export function WorkingArea() {
   };
 
   const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!grabber) return;
     dragging.current = true;
     setIsDragging(true);
     last.current = { x: e.clientX, y: e.clientY };
@@ -77,6 +78,7 @@ export function WorkingArea() {
   };
 
   const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!grabber) return;
     if (!dragging.current) return;
 
     const dx = e.clientX - last.current.x;
@@ -93,26 +95,41 @@ export function WorkingArea() {
 
   const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const zoomFactor = 1 - e.deltaY * 0.001;
+    if (grabber) {
+      const zoomFactor = 1 - e.deltaY * 0.001;
+      setCamera(c => ({
+        ...c,
+        zoom: Math.min(Math.max(c.zoom * zoomFactor, 0.2), 4),
+      }));
+      return;
+    }
 
-    setCamera(c => ({
-      ...c,
-      zoom: Math.min(Math.max(c.zoom * zoomFactor, 0.2), 4),
-    }));
+    if (!grabber) {
+      const speed = 3;
+
+      const dx = e.shiftKey ? e.deltaY : e.deltaX;
+      const dy = e.shiftKey ? 0 : e.deltaY;
+
+      setCamera((c) => ({
+        ...c,
+        x: c.x - dx * speed,
+        y: c.y - dy * speed,
+      }));
+    }
   };
 
   return (
     <div>
-      <Navbar setGrab={setGrabber}/>
-    <canvas
-      ref={canvasRef}
-      onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onMouseMove={onMouseMove}
-      onWheel={onWheel}
-      className={`${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
-    />
+      <Navbar setGrab={setGrabber} />
+      <canvas
+        ref={canvasRef}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        onMouseMove={onMouseMove}
+        onWheel={onWheel}
+        className={`${grabber ? `${isDragging ? "cursor-grabbing" : "cursor-grab"}` : ""}`}
+      />
     </div>
   );
 }

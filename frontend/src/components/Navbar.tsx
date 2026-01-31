@@ -6,27 +6,48 @@ import {
   Eraser,
   Hand,
   Image,
-  Lock,
   LucideMousePointerClick,
   Menu,
   Minus,
   Pencil,
   RectangleHorizontal,
-  ToolCase,
 } from "lucide-react";
-import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 
-const ToolButton = ({ children , handleClick}: { children: React.ReactNode; handleClick?: void}) => (
+type ToolConfig = {
+  id: string;
+  icon: React.ComponentType<{ size?: number }>;
+  grab?: boolean;
+};
+
+
+
+const tools: ToolConfig[] = [
+  { id: "pan", icon: Hand, grab: true },
+  { id: "select", icon: LucideMousePointerClick, grab: false },
+  { id: "rect", icon: RectangleHorizontal },
+  { id: "diamond", icon: Diamond },
+  { id: "circle", icon: Circle },
+  { id: "arrow", icon: ArrowRight },
+  { id: "line", icon: Minus },
+  { id: "pencil", icon: Pencil },
+  { id: "text", icon: Baseline },
+  { id: "image", icon: Image },
+  { id: "eraser", icon: Eraser },
+] as const;
+
+type Tool = typeof tools[number]["id"];
+
+
+const ToolButton = ({ children, handleClick, active }: { children: React.ReactNode; handleClick?: () => void; active?: boolean }) => (
   <button
-    className="
+    className={`
       p-2 rounded-md
-      hover:bg-gray-100
-      active:bg-gray-200
       transition cursor-pointer
-    "
-    
+      ${active ? "bg-gray-200" : "hover:bg-gray-100"}
+    `}
+    onClick={handleClick}
   >
     {children}
   </button>
@@ -35,11 +56,13 @@ const ToolButton = ({ children , handleClick}: { children: React.ReactNode; hand
 export function Navbar(
   {
     setGrab
-  } :
-  {
-    setGrab: Dispatch<SetStateAction<boolean>>
-  }
+  }:
+    {
+      setGrab: Dispatch<SetStateAction<boolean>>
+    }
 ) {
+  const [activeTool, setActiveTool] = useState<Tool>("select");
+
   return (
     <div
       className="
@@ -57,23 +80,18 @@ export function Navbar(
       </div>
 
       <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg shadow-lg mt-2">
-        <ToolButton><Lock size={18} /></ToolButton>
-        <Separator orientation="vertical" className="h-6 mx-1"/>
-
-        <ToolButton><Hand size={18} /></ToolButton>
-        <ToolButton><LucideMousePointerClick size={18} /></ToolButton>
-        <ToolButton><RectangleHorizontal size={18} /></ToolButton>
-        <ToolButton><Diamond size={18} /></ToolButton>
-        <ToolButton><Circle size={18} /></ToolButton>
-        <ToolButton><ArrowRight size={18} /></ToolButton>
-        <ToolButton><Minus size={18} /></ToolButton>
-        <ToolButton><Pencil size={18} /></ToolButton>
-        <ToolButton><Baseline size={18} /></ToolButton>
-        <ToolButton><Image size={18} /></ToolButton>
-        <ToolButton><Eraser size={18} /></ToolButton>
-
-        <Separator orientation="vertical" className="h-6 mx-1" />
-        <ToolButton><ToolCase size={18} /></ToolButton>
+        {tools.map(({ id, icon: Icon, grab }) => (
+          <ToolButton
+            key={id}
+            active={activeTool === id}
+            handleClick={() => {
+              setActiveTool(id)
+              setGrab(grab ?? false)
+            }}
+          >
+            <Icon size={18} />
+          </ToolButton>
+        ))}
       </div>
 
       <div className="flex items-center gap-2">
