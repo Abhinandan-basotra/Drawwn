@@ -11,6 +11,8 @@ export function WorkingArea() {
   const [textBox, setTextBox] = useState({ x: 0, y: 0, visible: false });
   const [textBoxContent, setTextBoxContent] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const dragTextBox = useRef(false);
+  const lastTextPos = useRef({x: 0, y: 0});
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
@@ -77,7 +79,7 @@ export function WorkingArea() {
     }
   };
 
-  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {    
     if (!grabber) return;
     dragging.current = true;
     setIsDragging(true);
@@ -103,6 +105,12 @@ export function WorkingArea() {
       x: c.x + dx,
       y: c.y + dy,
     }));
+
+    setTextBox(c => ({
+      ...c,
+      x: c.x + dx,
+      y: c.y + dy
+    }))
   };
 
   const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
@@ -117,16 +125,21 @@ export function WorkingArea() {
     }
 
     if (!grabber) {
-      const speed = 3;
 
       const dx = e.shiftKey ? e.deltaY : e.deltaX;
       const dy = e.shiftKey ? 0 : e.deltaY;
 
       setCamera((c) => ({
         ...c,
-        x: c.x - dx * speed,
-        y: c.y - dy * speed,
+        x: c.x - dx,
+        y: c.y - dy,
       }));
+
+      setTextBox((c) => ({
+        visible: c.visible,
+        x: c.x - dx,
+        y: c.y - dy,
+      }))
     }
   };
 
@@ -141,6 +154,30 @@ export function WorkingArea() {
       x,
       y
     })
+  }
+
+  const onTextMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    dragTextBox.current = true;
+    lastTextPos.current = {x: e.clientX, y: e.clientY};
+  };
+
+  const onTextMouseUp = () => {
+    dragTextBox.current = false;
+  }
+
+  const handleTextMove = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    if(!dragTextBox.current) return;
+    const dx = e.clientX - lastTextPos.current.x;
+    const dy = e.clientY - lastTextPos.current.y;
+
+    lastTextPos.current = {x: e.clientX, y: e.clientY};
+
+    setTextBox(c => ({
+      ...c,
+      x: c.x + dx,
+      y: c.y + dy
+    }))    
   }
 
   return (
@@ -164,13 +201,23 @@ export function WorkingArea() {
             ref={inputRef}
             value={textBoxContent}
             onChange={(e) => setTextBoxContent(e.target.value)}
+            onMouseDown={onTextMouseDown}
+            onMouseUp={onTextMouseUp}
+            onMouseMove={handleTextMove}
             onBlur={() => { (textBoxContent === "") ? setTextBox({ ...textBox, visible: false }) : null }}
             style={{
               position: "absolute",
               left: textBox.x,
               top: textBox.y,
             }}
-            className="px-2 py-1 text-sm border-none w-auto resize-none"
+            className={`px-2 py-1 text-sm 
+                      border border-transparent hover:border-blue-400
+                      w-auto
+                      font-['Virgil'] hover:cursor-all-scroll
+                      resize
+                      [&::-webkit-resizer]:hidden
+                      rounded
+                    `}
           />
         )
       }

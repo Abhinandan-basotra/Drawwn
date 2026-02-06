@@ -1,1 +1,6 @@
+@font-face {
+  font-family: 'Virgil';
+  src: url('/node_modules/@excalidraw/excalidraw/dist/excalidraw-assets/Virgil.woff2') format('woff2');
+}
+
 @import "tailwindcss";
