@@ -8,11 +8,8 @@ export function WorkingArea() {
   const [grabber, setGrabber] = useState(false);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
-  const [textBox, setTextBox] = useState({ x: 0, y: 0, visible: false });
-  const [textBoxContent, setTextBoxContent] = useState('');
+  const [textBox, setTextBox] = useState({ x: 0, y: 0, visible: false});
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const dragTextBox = useRef(false);
-  const lastTextPos = useRef({x: 0, y: 0});
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
@@ -152,32 +149,8 @@ export function WorkingArea() {
     setTextBox({
       visible: true,
       x,
-      y
+      y,
     })
-  }
-
-  const onTextMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    dragTextBox.current = true;
-    lastTextPos.current = {x: e.clientX, y: e.clientY};
-  };
-
-  const onTextMouseUp = () => {
-    dragTextBox.current = false;
-  }
-
-  const handleTextMove = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    if(!dragTextBox.current) return;
-    const dx = e.clientX - lastTextPos.current.x;
-    const dy = e.clientY - lastTextPos.current.y;
-
-    lastTextPos.current = {x: e.clientX, y: e.clientY};
-
-    setTextBox(c => ({
-      ...c,
-      x: c.x + dx,
-      y: c.y + dy
-    }))    
   }
 
   return (
@@ -199,22 +172,19 @@ export function WorkingArea() {
         textBox.visible && (
           <Textarea
             ref={inputRef}
-            value={textBoxContent}
-            onChange={(e) => setTextBoxContent(e.target.value)}
-            onMouseDown={onTextMouseDown}
-            onMouseUp={onTextMouseUp}
-            onMouseMove={handleTextMove}
-            onBlur={() => { (textBoxContent === "") ? setTextBox({ ...textBox, visible: false }) : null }}
+            inputRef={inputRef}
+            setTextBox={setTextBox}
+            textBox={textBox}
+            grabber={grabber}
             style={{
               position: "absolute",
               left: textBox.x,
               top: textBox.y,
             }}
             className={`px-2 py-1 text-sm 
-                      border border-transparent hover:border-blue-400
+                      border border-transparent ${grabber ? "cursor-default"  : "hover:border-blue-400 hover:cursor-all-scroll"} 
                       w-auto
-                      font-['Virgil'] hover:cursor-all-scroll
-                      resize
+                      font-['Virgil'] resize-none
                       [&::-webkit-resizer]:hidden
                       rounded
                     `}
