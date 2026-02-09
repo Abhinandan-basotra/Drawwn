@@ -182,12 +182,11 @@ export function WorkingArea() {
               top: textBox.y,
             }}
             className={`px-2 py-1 text-sm 
-                      border border-transparent ${grabber ? "cursor-default"  : "hover:border-blue-400 hover:cursor-all-scroll"} 
                       w-auto
                       font-['Virgil'] resize-none
                       [&::-webkit-resizer]:hidden
                       rounded
-                    `}
+            `}
           />
         )
       }
