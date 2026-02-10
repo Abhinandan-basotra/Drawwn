@@ -2,28 +2,26 @@ import { Navbar } from "@/components/Navbar";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 
+interface TextBox{
+  id: number;
+  x: number;
+  y: number;
+};
+
 export function WorkingArea() {
   const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [grabber, setGrabber] = useState(false);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
-  const [textBox, setTextBox] = useState({ x: 0, y: 0, visible: false});
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [textBoxes, setTextBoxes] = useState<TextBox[]>([]);
+  const nextIdRef = useRef(0);
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
     zoom: 1,
   });
-
-  useEffect(() => {
-    if (textBox.visible) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
-    }
-  }, [textBox.visible])
 
   useEffect(() => {
     const canvas = canvasRef.current!; //! means i know this is not null
@@ -103,11 +101,13 @@ export function WorkingArea() {
       y: c.y + dy,
     }));
 
-    setTextBox(c => ({
-      ...c,
-      x: c.x + dx,
-      y: c.y + dy
-    }))
+    setTextBoxes(boxes => 
+      boxes.map(box => ({
+        ...box,
+        x: box.x + dx,
+        y: box.y + dy
+      }))
+    )
   };
 
   const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
@@ -132,11 +132,13 @@ export function WorkingArea() {
         y: c.y - dy,
       }));
 
-      setTextBox((c) => ({
-        visible: c.visible,
-        x: c.x - dx,
-        y: c.y - dy,
-      }))
+      setTextBoxes((boxes) =>
+        boxes.map(box => ({
+          ...box,
+          x: box.x - dx,
+          y: box.y - dy
+        }))
+      )
     }
   };
 
@@ -146,12 +148,21 @@ export function WorkingArea() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    setTextBox({
-      visible: true,
-      x,
-      y,
-    })
+    const newId = nextIdRef.current++;
+    setTextBoxes(boxes => [...boxes, {id: newId, x, y}]);
   }
+
+  const updateTextBoxPosition = (id: number, x: number, y: number) => {
+    setTextBoxes(boxes => 
+      boxes.map(box => 
+        box.id === id ? { ...box, x, y } : box
+      )
+    );
+  };
+
+  const removeTextBox = (id: number) => {
+    setTextBoxes(boxes => boxes.filter(box => box.id != id))
+  } 
 
   return (
     <div>
@@ -168,28 +179,27 @@ export function WorkingArea() {
           className={`${grabber ? `${isDragging ? "cursor-grabbing" : "cursor-grab"}` : ""}`}
         />
       </div>
-      {
-        textBox.visible && (
-          <Textarea
-            ref={inputRef}
-            inputRef={inputRef}
-            setTextBox={setTextBox}
-            textBox={textBox}
-            grabber={grabber}
-            style={{
-              position: "absolute",
-              left: textBox.x,
-              top: textBox.y,
-            }}
-            className={`px-2 py-1 text-sm 
-                      w-auto
-                      font-['Virgil'] resize-none
-                      [&::-webkit-resizer]:hidden
-                      rounded
-            `}
-          />
-        )
-      }
+      {textBoxes.map((textBox) => (
+        <Textarea
+          key={textBox.id}
+          id={textBox.id}
+          grabber={grabber}
+          position={{ x: textBox.x, y: textBox.y }}
+          onPositionChange={(x: number, y: number) => updateTextBoxPosition(textBox.id, x, y)}
+          onRemove={() => removeTextBox(textBox.id)}
+          style={{
+            position: "absolute",
+            left: textBox.x,
+            top: textBox.y,
+          }}
+          className={`px-2 py-1 text-sm 
+                    w-auto
+                    font-['Virgil'] resize-none
+                    [&::-webkit-resizer]:hidden
+                    rounded
+          `}
+        />
+      ))}
     </div>
   );
 }

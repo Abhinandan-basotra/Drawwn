@@ -2,7 +2,18 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Textarea({ className, setTextBox, inputRef, textBox, grabber, style: parentStyle, ...props }: React.ComponentProps<"textarea">) {
+function Textarea({ 
+  className, 
+  setTextBox, 
+  textBox, 
+  grabber, 
+  id, 
+  onRemove, 
+  position,
+  onPositionChange,
+  style: parentStyle,
+  ...props 
+}: React.ComponentProps<"textarea">) {
   const [textBoxContent, setTextBoxContent] = React.useState('');
   const [clickCount, setClickCount] = React.useState(0);
   const dragTextBox = React.useRef(false);
@@ -11,8 +22,15 @@ function Textarea({ className, setTextBox, inputRef, textBox, grabber, style: pa
   const [scale, setScale] = React.useState(1);
   const lastTextPos = React.useRef({ x: 0, y: 0 });
   const lastResizePos = React.useRef({x: 0, y: 0});
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
   const cornerSize = 10;
+
+  React.useEffect(() => {
+    setTimeout(() => {
+      inputRef.current?.focus();
+    },0);
+  },[])
 
   const onTextMouseDown = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     if(textBoxContent.length === 0 || grabber) return;   
@@ -82,6 +100,10 @@ function Textarea({ className, setTextBox, inputRef, textBox, grabber, style: pa
         dragTextBox.current = false;
         dragResize.current = false;
         setIsHoveringCorner(false);
+
+         if (textBoxContent.trim().length === 0) {
+          onRemove?.();
+        }
       }
     };
 
@@ -114,7 +136,7 @@ function Textarea({ className, setTextBox, inputRef, textBox, grabber, style: pa
       document.removeEventListener("mousemove", handleGlobalMouseMove);
       document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
-  }, [inputRef]);
+  }, [textBoxContent, onRemove]);
 
   const handleTextMove = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     if (!dragTextBox.current || grabber || !clickCount || clickCount >= 3) return;
