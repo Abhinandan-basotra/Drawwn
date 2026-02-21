@@ -1,17 +1,15 @@
-import { Navbar } from "@/components/Navbar";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 
-interface TextBox{
+interface TextBox {
   id: number;
   x: number;
   y: number;
 };
 
-export function WorkingArea() {
+export function WorkingArea({ grabber }: { grabber: boolean }) {
   const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [grabber, setGrabber] = useState(false);
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
   const [textBoxes, setTextBoxes] = useState<TextBox[]>([]);
@@ -75,7 +73,7 @@ export function WorkingArea() {
     }
   };
 
-  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {    
+  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!grabber) return;
     dragging.current = true;
     setIsDragging(true);
@@ -102,7 +100,7 @@ export function WorkingArea() {
       y: c.y + dy,
     }));
 
-    setTextBoxes(boxes => 
+    setTextBoxes(boxes =>
       boxes.map(box => ({
         ...box,
         x: box.x + dx,
@@ -112,7 +110,6 @@ export function WorkingArea() {
   };
 
   const onWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
     if (grabber) {
       const zoomFactor = 1 - e.deltaY * 0.001;
       setCamera(c => ({
@@ -144,18 +141,18 @@ export function WorkingArea() {
   };
 
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if(grabber) return;
+    if (grabber) return;
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     const newId = nextIdRef.current++;
-    setTextBoxes(boxes => [...boxes, {id: newId, x, y}]);
+    setTextBoxes(boxes => [...boxes, { id: newId, x, y }]);
   }
 
   const updateTextBoxPosition = (id: number, x: number, y: number) => {
-    setTextBoxes(boxes => 
-      boxes.map(box => 
+    setTextBoxes(boxes =>
+      boxes.map(box =>
         box.id === id ? { ...box, x, y } : box
       )
     );
@@ -163,11 +160,10 @@ export function WorkingArea() {
 
   const removeTextBox = (id: number) => {
     setTextBoxes(boxes => boxes.filter(box => box.id != id))
-  } 
+  }
 
   return (
     <div>
-      <Navbar setGrab={setGrabber} />
       <div>
         <canvas
           ref={canvasRef}
@@ -186,6 +182,7 @@ export function WorkingArea() {
           id={textBox.id}
           activeState={activeState}
           setActiveState={setActiveState}
+          setTextBoxes={setTextBoxes}
           grabber={grabber}
           position={{ x: textBox.x, y: textBox.y }}
           onPositionChange={(x: number, y: number) => updateTextBoxPosition(textBox.id, x, y)}
@@ -199,7 +196,7 @@ export function WorkingArea() {
                     w-auto
                     font-['Virgil'] resize-none
                     [&::-webkit-resizer]:hidden
-                    rounded hover:cursor-all-scroll
+                    rounded
           `}
         />
       ))}

@@ -2,17 +2,18 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Textarea({ 
-  className, 
+function Textarea({
+  className,
   activeState,
   setActiveState,
-  grabber, 
-  id, 
-  onRemove, 
+  setTextBoxes,
+  grabber,
+  id,
+  onRemove,
   position,
   onPositionChange,
   style: parentStyle,
-  ...props 
+  ...props
 }: React.ComponentProps<"textarea">) {
   const [textBoxContent, setTextBoxContent] = React.useState('');
   const [clickCount, setClickCount] = React.useState(0);
@@ -21,7 +22,7 @@ function Textarea({
   const [isHoveringCorner, setIsHoveringCorner] = React.useState(false);
   const [scale, setScale] = React.useState(1);
   const lastTextPos = React.useRef({ x: 0, y: 0 });
-  const lastResizePos = React.useRef({x: 0, y: 0});
+  const lastResizePos = React.useRef({ x: 0, y: 0 });
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
   const cornerSize = 10;
@@ -29,21 +30,21 @@ function Textarea({
   React.useEffect(() => {
     setTimeout(() => {
       inputRef.current?.focus();
-    },0);
-  },[])
+    }, 0);
+  }, [])
 
   const onTextMouseDown = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    if(textBoxContent.length === 0 || grabber) return;   
+    if (textBoxContent.length === 0 || grabber) return;
     e.stopPropagation();
     setActiveState?.(id ?? null);
     const rect = e.currentTarget.getBoundingClientRect();
 
-    const isBottomRightCorner = e.clientX >= rect.right - cornerSize && 
-                                e.clientX <= rect.right &&
-                                e.clientY >= rect.bottom - cornerSize &&
-                                e.clientY <= rect.bottom;
-    
-    if(isBottomRightCorner && clickCount >= 1){
+    const isBottomRightCorner = e.clientX >= rect.right - cornerSize &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.bottom - cornerSize &&
+      e.clientY <= rect.bottom;
+
+    if (isBottomRightCorner && clickCount >= 1) {
       dragResize.current = true;
       lastResizePos.current = { x: e.clientX, y: e.clientY };
       e.preventDefault();
@@ -51,10 +52,10 @@ function Textarea({
     }
 
     dragTextBox.current = true;
-    
+
     setClickCount((prev) => {
       const next = prev + 1;
-      if(grabber) return 0;
+      if (grabber) return 0;
       if (next < 3) {
         e.preventDefault();
         inputRef?.current?.blur();
@@ -65,7 +66,7 @@ function Textarea({
   };
 
   const onTextMouseUp = () => {
-    if(grabber) return;
+    if (grabber) return;
     dragTextBox.current = false;
     dragResize.current = false;
   }
@@ -73,17 +74,17 @@ function Textarea({
   const onTextMouseMove = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     if (clickCount >= 1 && !grabber && !dragTextBox.current && !dragResize.current) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const isInBottomRightCorner = 
+      const isInBottomRightCorner =
         e.clientX >= rect.right - cornerSize &&
         e.clientX <= rect.right &&
         e.clientY >= rect.bottom - cornerSize &&
         e.clientY <= rect.bottom;
-      
+
       setIsHoveringCorner(isInBottomRightCorner);
     } else {
       setIsHoveringCorner(false);
     }
-    
+
     handleTextMove(e);
   };
 
@@ -101,7 +102,7 @@ function Textarea({
         dragResize.current = false;
         setIsHoveringCorner(false);
 
-         if (textBoxContent.trim().length === 0) {
+        if (textBoxContent.trim().length === 0) {
           onRemove?.();
         }
       }
@@ -111,14 +112,14 @@ function Textarea({
       if (dragResize.current) {
         const dx = e.clientX - lastResizePos.current.x;
         const dy = e.clientY - lastResizePos.current.y;
-    
-        const delta = (dx + dy) * 0.005; 
-      
+
+        const delta = (dx + dy) * 0.005;
+
         setScale(prev => {
           const newScale = prev + delta;
-          return Math.max(0.3, Math.min(5, newScale)); 
+          return Math.max(0.3, Math.min(5, newScale));
         });
-    
+
         lastResizePos.current = { x: e.clientX, y: e.clientY };
       }
     };
@@ -127,14 +128,23 @@ function Textarea({
       dragResize.current = false;
     };
 
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete" && id === activeState) {
+        e.preventDefault();
+        onRemove?.();
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("mousemove", handleGlobalMouseMove);
     document.addEventListener("mouseup", handleGlobalMouseUp);
-    
+    document.addEventListener("keydown", handleGlobalKeyDown);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("mousemove", handleGlobalMouseMove);
       document.removeEventListener("mouseup", handleGlobalMouseUp);
+      document.removeEventListener("keydown", handleGlobalKeyDown);
     };
   }, [textBoxContent, onRemove]);
 
@@ -145,26 +155,25 @@ function Textarea({
 
     lastTextPos.current = { x: e.clientX, y: e.clientY };
 
-    if(!position) return;
+    if (!position) return;
     onPositionChange?.(position?.x + dx, position?.y + dy);
   }
 
   const handleBlur = () => {
     setClickCount(0);
   }
-  
+
   const shouldApplyInteraction = id === activeState;
 
   const interactionClass = grabber
     ? "cursor-default border-none hover:border-transparent"
     : isHoveringCorner
       ? "cursor-nwse-resize border border-blue-400"
-      : clickCount == 1 || clickCount == 2 
-        ? "border border-blue-400 hover:cursor-all-scroll" 
+      : clickCount == 1 || clickCount == 2
+        ? "border border-blue-400 hover:cursor-all-scroll"
         : clickCount >= 3
           ? "cursor-auto hover:border-transparent"
-          : "hover:cursor-all-scroll";
-  
+          : "";
   return (
     <textarea
       ref={inputRef}
