@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 
 function Textarea({ 
   className, 
-  setTextBox, 
-  textBox, 
+  activeState,
+  setActiveState,
   grabber, 
   id, 
   onRemove, 
@@ -35,7 +35,7 @@ function Textarea({
   const onTextMouseDown = (e: React.MouseEvent<HTMLTextAreaElement>) => {
     if(textBoxContent.length === 0 || grabber) return;   
     e.stopPropagation();
-
+    setActiveState?.(id ?? null);
     const rect = e.currentTarget.getBoundingClientRect();
 
     const isBottomRightCorner = e.clientX >= rect.right - cornerSize && 
@@ -94,9 +94,9 @@ function Textarea({
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!inputRef?.current) return;
-
       if (!inputRef.current.contains(e.target as Node)) {
         setClickCount(0);
+        setActiveState?.(null);
         dragTextBox.current = false;
         dragResize.current = false;
         setIsHoveringCorner(false);
@@ -145,18 +145,15 @@ function Textarea({
 
     lastTextPos.current = { x: e.clientX, y: e.clientY };
 
-    if (!setTextBox) return;
-    setTextBox(c => ({
-      ...c,
-      x: c.x + dx,
-      y: c.y + dy
-    }))
+    if(!position) return;
+    onPositionChange?.(position?.x + dx, position?.y + dy);
   }
 
   const handleBlur = () => {
     setClickCount(0);
   }
-
+  
+  const shouldApplyInteraction = id === activeState;
 
   const interactionClass = grabber
     ? "cursor-default border-none hover:border-transparent"
@@ -176,7 +173,7 @@ function Textarea({
       {...props}
       className={cn(
         "placeholder:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:bg-input/30 flex field-sizing-content w-full rounded-md bg-transparent px-3 py-2 text-base transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        interactionClass,
+        shouldApplyInteraction ? interactionClass : "",
         className
       )}
       style={{

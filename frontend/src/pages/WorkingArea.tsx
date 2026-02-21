@@ -16,6 +16,7 @@ export function WorkingArea() {
   const last = useRef({ x: 0, y: 0 });
   const [textBoxes, setTextBoxes] = useState<TextBox[]>([]);
   const nextIdRef = useRef(0);
+  const [activeState, setActiveState] = useState<number | null>(null);
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
@@ -183,6 +184,8 @@ export function WorkingArea() {
         <Textarea
           key={textBox.id}
           id={textBox.id}
+          activeState={activeState}
+          setActiveState={setActiveState}
           grabber={grabber}
           position={{ x: textBox.x, y: textBox.y }}
           onPositionChange={(x: number, y: number) => updateTextBoxPosition(textBox.id, x, y)}
@@ -196,7 +199,7 @@ export function WorkingArea() {
                     w-auto
                     font-['Virgil'] resize-none
                     [&::-webkit-resizer]:hidden
-                    rounded
+                    rounded hover:cursor-all-scroll
           `}
         />
       ))}
