@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
@@ -38,7 +38,24 @@ const STROKE_COLORS: StrokeColor[] = [
   { color: "#374151", label: "Dark Gray" },
 ];
 
-const FONT_SIZES = ["S", "M", "L", "XL"] as const;
+const FONT_SIZES = [
+  {
+    size: "small",
+    shortcut: "S"
+  },
+  {
+    size: "large",
+    shortcut: "M"
+  },
+  {
+    size: "x-large",
+    shortcut: "L"
+  },
+  {
+    size: "xx-large",
+    shortcut: "XL"
+  }
+] as const;
 type FontSize = (typeof FONT_SIZES)[number];
 
 
@@ -67,13 +84,13 @@ function TipButton({
         <Button
           variant="ghost"
           size="icon"
-          className={`h-7 w-7 ${className}`}
+          className={`h-7 w-7 cursor-pointer ${className}`}
           onClick={onClick}
         >
           {children}
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right" className="text-xs">
+      <TooltipContent side="bottom" className="text-xs">
         {label}
       </TooltipContent>
     </Tooltip>
@@ -81,10 +98,21 @@ function TipButton({
 }
 
 
-export function EditingBar() {
-  const [strokeColor, setStrokeColor] = useState("#111827");
+export function EditingBar({
+  strokeColor,
+  setStrokeColor,
+  ref,
+  setFontSize,
+  fontSize,
+}: {
+  strokeColor: string;
+  setStrokeColor: (color: string) => void;
+  ref: RefObject<HTMLElement | null>;
+  setFontSize: (fontSize: string) => void;
+  fontSize: string
+}) {
+
   const [fontFamily, setFontFamily] = useState<number>(0);
-  const [fontSize, setFontSize] = useState<FontSize>("XL");
   const [textAlign, setTextAlign] = useState<number>(0);
   const [opacity, setOpacity] = useState<number[]>([100]);
 
@@ -103,7 +131,7 @@ export function EditingBar() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <aside className="absolute bottom-15 left-5 flex flex-col w-56 h-120 bg-white border-r border-border px-3 py-3 gap-3 overflow-y-auto shadow-sm select-none rounded-lg">
+      <aside ref={ref} className="absolute bottom-15 left-5 flex flex-col w-56 h-120 bg-white border-r border-border px-3 py-3 gap-3 overflow-y-auto shadow-sm select-none rounded-lg">
         <section>
           <SectionLabel>Stroke</SectionLabel>
           <div className="flex flex-wrap gap-1.5">
@@ -113,7 +141,7 @@ export function EditingBar() {
                   <button
                     onClick={() => setStrokeColor(color)}
                     aria-label={label}
-                    className="h-7 w-7 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:scale-110"
+                    className="cursor-pointer h-7 w-7 rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:scale-110"
                     style={{
                       backgroundColor: color,
                       boxShadow:
@@ -145,7 +173,7 @@ export function EditingBar() {
                     pressed={fontFamily === i}
                     onPressedChange={() => setFontFamily(i)}
                     aria-label={opt.label}
-                    className="h-7 w-7 p-0 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+                    className="cursor-pointer h-7 w-7 p-0 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
                   >
                     {opt.icon}
                   </Toggle>
@@ -165,14 +193,14 @@ export function EditingBar() {
           <div className="flex gap-1">
             {FONT_SIZES.map((size) => (
               <Toggle
-                key={size}
+                key={size.size}
                 size="sm"
-                pressed={fontSize === size}
-                onPressedChange={() => setFontSize(size)}
+                pressed={fontSize === size.size}
+                onPressedChange={(pressed) =>{if(pressed) setFontSize(size.size)}}
                 aria-label={`Font size ${size}`}
-                className="h-7 w-7 p-0 text-[11px] font-bold data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+                className="cursor-pointer h-7 w-7 p-0 text-[11px] font-bold data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
               >
-                {size}
+                {size.shortcut}
               </Toggle>
             ))}
           </div>
@@ -191,7 +219,7 @@ export function EditingBar() {
                     pressed={textAlign === i}
                     onPressedChange={() => setTextAlign(i)}
                     aria-label={opt.label}
-                    className="h-7 w-7 p-0 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+                    className="cursor-pointer h-7 w-7 p-0 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
                   >
                     {opt.icon}
                   </Toggle>
@@ -219,7 +247,7 @@ export function EditingBar() {
             step={1}
             value={opacity}
             onValueChange={setOpacity}
-            className="w-full"
+            className="w-full cursor-pointer"
           />
           <div className="flex justify-between mt-1.5">
             <span className="text-[10px] text-muted-foreground">0</span>

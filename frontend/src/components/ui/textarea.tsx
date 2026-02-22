@@ -2,6 +2,24 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+interface TextareaProps {
+  className?: string;
+  activeState?: number | null;
+  setActiveState?: (id: number | null) => void;
+  setTextBoxes?: React.Dispatch<React.SetStateAction<any[]>>;
+  grabber?: boolean;
+  id?: number;
+  onRemove?: () => void;
+  onColorChange?: (color: string) => void;
+  position?: { x: number; y: number };
+  strokeColor?: string;
+  onPositionChange?: (x: number, y: number) => void;
+  editingBarRef?: React.RefObject<HTMLElement | null>;
+  setOpenEditingBar?: (open: boolean) => void;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}
+
 function Textarea({
   className,
   activeState,
@@ -10,11 +28,14 @@ function Textarea({
   grabber,
   id,
   onRemove,
+  onColorChange,
   position,
   onPositionChange,
+  editingBarRef,
+  setOpenEditingBar,
   style: parentStyle,
   ...props
-}: React.ComponentProps<"textarea">) {
+}: TextareaProps) {
   const [textBoxContent, setTextBoxContent] = React.useState('');
   const [clickCount, setClickCount] = React.useState(0);
   const dragTextBox = React.useRef(false);
@@ -95,12 +116,13 @@ function Textarea({
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!inputRef?.current) return;
-      if (!inputRef.current.contains(e.target as Node)) {
+      if (!inputRef.current.contains(e.target as Node) && !editingBarRef?.current?.contains(e.target as Node)) {
         setClickCount(0);
         setActiveState?.(null);
         dragTextBox.current = false;
         dragResize.current = false;
         setIsHoveringCorner(false);
+        setOpenEditingBar?.(false);
 
         if (textBoxContent.trim().length === 0) {
           onRemove?.();
@@ -181,7 +203,7 @@ function Textarea({
       readOnly={grabber}
       {...props}
       className={cn(
-        "placeholder:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:bg-input/30 flex field-sizing-content w-full rounded-md bg-transparent px-3 py-2 text-base transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "placeholder:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 dark:bg-input/30 flex field-sizing-content bg-transparent transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm px-2 py-1 w-auto font-['Virgil'] resize-none [&::-webkit-resizer]:hidden rounded",
         shouldApplyInteraction ? interactionClass : "",
         className
       )}

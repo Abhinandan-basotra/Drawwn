@@ -1,3 +1,4 @@
+import { EditingBar } from "@/components/EditingBar";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 
@@ -5,7 +6,18 @@ interface TextBox {
   id: number;
   x: number;
   y: number;
+  color: string;
+  fontSize: string;
+}
+
+const FONT_SIZE_MAP: Record<FontSize, string> = {
+  small: "12px",
+  large: "16px",
+  "x-large": "20px",
+  "xx-large": "24px",
 };
+
+type FontSize = (string)[number];
 
 export function WorkingArea({ grabber }: { grabber: boolean }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -15,6 +27,9 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
   const [textBoxes, setTextBoxes] = useState<TextBox[]>([]);
   const nextIdRef = useRef(0);
   const [activeState, setActiveState] = useState<number | null>(null);
+  const [openEditingBar, setOpenEditingBar] = useState(false);
+  const editingBarRef = useRef<HTMLElement>(null);
+  const [fontSize, setFontSize] = useState<FontSize>("xl");
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
@@ -147,7 +162,7 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     const y = e.clientY - rect.top;
 
     const newId = nextIdRef.current++;
-    setTextBoxes(boxes => [...boxes, { id: newId, x, y }]);
+    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg" }]);
   }
 
   const updateTextBoxPosition = (id: number, x: number, y: number) => {
@@ -158,12 +173,60 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     );
   };
 
+  const updateTextBoxColor = (id: number, color: string) => {
+    setTextBoxes(boxes =>
+      boxes.map(box =>
+        box.id === id ? { ...box, color } : box
+      )
+    );
+  };
+
+  const updateTextSize = (id: number, fontSize: string) => {
+    setTextBoxes(boxes =>
+      boxes.map(box =>
+        box.id === id ? { ...box, fontSize } : box
+      )
+    );
+  };
+
   const removeTextBox = (id: number) => {
     setTextBoxes(boxes => boxes.filter(box => box.id != id))
   }
 
+  const getActiveTextBoxColor = () => {
+    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
+    return activeTextBox?.color || "#111827";
+  };
+
+  const getActiveTextBoxSize = () => {
+    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
+    return activeTextBox?.fontSize || "sm";
+  };
+
+  const handleColorChange = (color: string) => {
+    if (activeState !== null) {
+      updateTextBoxColor(activeState, color);
+    }
+  };
+
+  const handleSizeChange = (fontSize: string) => {
+    if (activeState !== null) {
+      updateTextSize(activeState, fontSize);
+    }
+  };
+
   return (
     <div>
+      {
+        openEditingBar &&
+        <EditingBar
+          strokeColor={getActiveTextBoxColor()}
+          setStrokeColor={handleColorChange}
+          ref={editingBarRef}
+          fontSize={getActiveTextBoxSize()}
+          setFontSize={handleSizeChange}
+        />
+      }
       <div>
         <canvas
           ref={canvasRef}
@@ -184,20 +247,21 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
           setActiveState={setActiveState}
           setTextBoxes={setTextBoxes}
           grabber={grabber}
+          onClick={() => setOpenEditingBar(true)}
+          onFocus={() => setOpenEditingBar(true)}
           position={{ x: textBox.x, y: textBox.y }}
           onPositionChange={(x: number, y: number) => updateTextBoxPosition(textBox.id, x, y)}
           onRemove={() => removeTextBox(textBox.id)}
+          onColorChange={(color: string) => updateTextBoxColor(textBox.id, color)}
+          setOpenEditingBar={setOpenEditingBar}
+          editingBarRef={editingBarRef}
           style={{
             position: "absolute",
             left: textBox.x,
+            color: textBox.color || "black",
+            fontSize: FONT_SIZE_MAP[textBox.fontSize],
             top: textBox.y,
           }}
-          className={`px-2 py-1 text-sm 
-                    w-auto
-                    font-['Virgil'] resize-none
-                    [&::-webkit-resizer]:hidden
-                    rounded
-          `}
         />
       ))}
     </div>
