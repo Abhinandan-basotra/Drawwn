@@ -8,6 +8,7 @@ interface TextBox {
   y: number;
   color: string;
   fontSize: string;
+  text_align: React.CSSProperties["textAlign"];
 }
 
 const FONT_SIZE_MAP: Record<FontSize, string> = {
@@ -29,7 +30,6 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
   const [activeState, setActiveState] = useState<number | null>(null);
   const [openEditingBar, setOpenEditingBar] = useState(false);
   const editingBarRef = useRef<HTMLElement>(null);
-  const [fontSize, setFontSize] = useState<FontSize>("xl");
 
   const [camera, setCamera] = useState({
     x: window.innerWidth / 2,
@@ -162,7 +162,7 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     const y = e.clientY - rect.top;
 
     const newId = nextIdRef.current++;
-    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg" }]);
+    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg", text_align: "start" as const}]);
   }
 
   const updateTextBoxPosition = (id: number, x: number, y: number) => {
@@ -189,6 +189,14 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     );
   };
 
+  const updateTextAlignment = (id: number, text_align: React.CSSProperties["textAlign"]) => {
+    setTextBoxes(boxes => 
+      boxes.map(box => 
+        box.id === id ? {...box, text_align} : box
+      )
+    )
+  };
+
   const removeTextBox = (id: number) => {
     setTextBoxes(boxes => boxes.filter(box => box.id != id))
   }
@@ -203,6 +211,11 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     return activeTextBox?.fontSize || "sm";
   };
 
+  const getActiveTextAlign = () => {
+    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
+    return activeTextBox?.text_align || "start";
+  };
+
   const handleColorChange = (color: string) => {
     if (activeState !== null) {
       updateTextBoxColor(activeState, color);
@@ -215,6 +228,12 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     }
   };
 
+  const handleTextAlign = (text_align: React.CSSProperties["textAlign"]) => {
+    if(activeState !== null){
+      updateTextAlignment(activeState, text_align);
+    }
+  }
+
   return (
     <div>
       {
@@ -225,6 +244,8 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
           ref={editingBarRef}
           fontSize={getActiveTextBoxSize()}
           setFontSize={handleSizeChange}
+          textAlignment={getActiveTextAlign()}
+          setTextAlignment={handleTextAlign}
         />
       }
       <div>
@@ -261,6 +282,7 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
             color: textBox.color || "black",
             fontSize: FONT_SIZE_MAP[textBox.fontSize],
             top: textBox.y,
+            textAlign: textBox.text_align || "start"
           }}
         />
       ))}

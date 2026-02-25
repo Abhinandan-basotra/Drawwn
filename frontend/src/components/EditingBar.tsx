@@ -56,7 +56,6 @@ const FONT_SIZES = [
     shortcut: "XL"
   }
 ] as const;
-type FontSize = (typeof FONT_SIZES)[number];
 
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -104,16 +103,19 @@ export function EditingBar({
   ref,
   setFontSize,
   fontSize,
+  textAlignment,
+  setTextAlignment
 }: {
   strokeColor: string;
   setStrokeColor: (color: string) => void;
   ref: RefObject<HTMLElement | null>;
   setFontSize: (fontSize: string) => void;
-  fontSize: string
+  fontSize: string;
+  textAlignment: React.CSSProperties["textAlign"];
+  setTextAlignment: (align: React.CSSProperties["textAlign"]) => void;
 }) {
 
   const [fontFamily, setFontFamily] = useState<number>(0);
-  const [textAlign, setTextAlign] = useState<number>(0);
   const [opacity, setOpacity] = useState<number[]>([100]);
 
   const fontFamilyOptions = [
@@ -124,10 +126,10 @@ export function EditingBar({
   ];
 
   const textAlignOptions = [
-    { icon: <AlignLeft size={14} />, label: "Align left" },
-    { icon: <AlignCenter size={14} />, label: "Align center" },
-    { icon: <AlignRight size={14} />, label: "Align right" },
-  ];
+    { icon: <AlignLeft size={14} />, label: "Align left", value: "start" as const},
+    { icon: <AlignCenter size={14} />, label: "Align center", value: "center" as const },
+    { icon: <AlignRight size={14} />, label: "Align right", value: "end" as const },
+  ] as const;
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -216,8 +218,8 @@ export function EditingBar({
                 <TooltipTrigger asChild>
                   <Toggle
                     size="sm"
-                    pressed={textAlign === i}
-                    onPressedChange={() => setTextAlign(i)}
+                    pressed={textAlignment === opt.value}
+                    onPressedChange={() => setTextAlignment(opt.value)}
                     aria-label={opt.label}
                     className="cursor-pointer h-7 w-7 p-0 data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
                   >
