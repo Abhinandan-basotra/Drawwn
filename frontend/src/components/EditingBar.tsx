@@ -104,7 +104,11 @@ export function EditingBar({
   setFontSize,
   fontSize,
   textAlignment,
-  setTextAlignment
+  setTextAlignment,
+  opacity,
+  setOpacity,
+  handleDelete,
+  handleDuplicate
 }: {
   strokeColor: string;
   setStrokeColor: (color: string) => void;
@@ -113,10 +117,13 @@ export function EditingBar({
   fontSize: string;
   textAlignment: React.CSSProperties["textAlign"];
   setTextAlignment: (align: React.CSSProperties["textAlign"]) => void;
+  opacity: number[]
+  setOpacity: (opacity: number[]) => void;
+  handleDelete: () => void;
+  handleDuplicate: () => void;
 }) {
 
   const [fontFamily, setFontFamily] = useState<number>(0);
-  const [opacity, setOpacity] = useState<number[]>([100]);
 
   const fontFamilyOptions = [
     { icon: <PenLine size={14} />, label: "Handwriting" },
@@ -262,10 +269,11 @@ export function EditingBar({
         <section>
           <SectionLabel>Actions</SectionLabel>
           <div className="flex gap-1">
-            <TipButton label="Duplicate"><Copy size={14} /></TipButton>
+            <TipButton label="Duplicate" onClick={handleDuplicate}><Copy size={14} /></TipButton>
             <TipButton
               label="Delete"
               className="hover:bg-destructive/10 hover:text-destructive"
+              onClick={handleDelete}
             >
               <Trash2 size={14} />
             </TipButton>

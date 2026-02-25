@@ -1,14 +1,17 @@
 import { EditingBar } from "@/components/EditingBar";
 import { Textarea } from "@/components/ui/textarea";
+import { getActiveTextAlign, getActiveTextBoxColor, getActiveTextBoxOpacity, getActiveTextBoxSize, updateTextAlignment, updateTextBoxColor, updateTextBoxPosition, updateTextBoxText, updateTextOpacity, updateTextSize } from "@/lib/updateStyles";
 import { useEffect, useRef, useState } from "react";
 
-interface TextBox {
+export interface TextBox {
   id: number;
+  text: string | null;
   x: number;
   y: number;
   color: string;
   fontSize: string;
   text_align: React.CSSProperties["textAlign"];
+  opacity: number[]
 }
 
 const FONT_SIZE_MAP: Record<FontSize, string> = {
@@ -162,90 +165,81 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     const y = e.clientY - rect.top;
 
     const newId = nextIdRef.current++;
-    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg", text_align: "start" as const}]);
+    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg", text_align: "start", opacity: [100], text: "" as const }]);
   }
-
-  const updateTextBoxPosition = (id: number, x: number, y: number) => {
-    setTextBoxes(boxes =>
-      boxes.map(box =>
-        box.id === id ? { ...box, x, y } : box
-      )
-    );
-  };
-
-  const updateTextBoxColor = (id: number, color: string) => {
-    setTextBoxes(boxes =>
-      boxes.map(box =>
-        box.id === id ? { ...box, color } : box
-      )
-    );
-  };
-
-  const updateTextSize = (id: number, fontSize: string) => {
-    setTextBoxes(boxes =>
-      boxes.map(box =>
-        box.id === id ? { ...box, fontSize } : box
-      )
-    );
-  };
-
-  const updateTextAlignment = (id: number, text_align: React.CSSProperties["textAlign"]) => {
-    setTextBoxes(boxes => 
-      boxes.map(box => 
-        box.id === id ? {...box, text_align} : box
-      )
-    )
-  };
 
   const removeTextBox = (id: number) => {
     setTextBoxes(boxes => boxes.filter(box => box.id != id))
   }
 
-  const getActiveTextBoxColor = () => {
-    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
-    return activeTextBox?.color || "#111827";
-  };
-
-  const getActiveTextBoxSize = () => {
-    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
-    return activeTextBox?.fontSize || "sm";
-  };
-
-  const getActiveTextAlign = () => {
-    const activeTextBox = textBoxes.find(tb => tb.id === activeState);
-    return activeTextBox?.text_align || "start";
-  };
-
   const handleColorChange = (color: string) => {
     if (activeState !== null) {
-      updateTextBoxColor(activeState, color);
+      updateTextBoxColor(setTextBoxes, activeState, color);
     }
   };
 
   const handleSizeChange = (fontSize: string) => {
     if (activeState !== null) {
-      updateTextSize(activeState, fontSize);
+      updateTextSize(setTextBoxes, activeState, fontSize);
     }
   };
 
   const handleTextAlign = (text_align: React.CSSProperties["textAlign"]) => {
-    if(activeState !== null){
-      updateTextAlignment(activeState, text_align);
+    if (activeState !== null) {
+      updateTextAlignment(setTextBoxes, activeState, text_align);
+    }
+  };
+
+  const handleOpacityChange = (opacity: number[]) => {
+    if (activeState != null) {
+      updateTextOpacity(setTextBoxes, activeState, opacity);
     }
   }
+
+  const handleDeleteTextBox = () => {
+    setTextBoxes(boxes => 
+      boxes.filter(box => box.id !== activeState)
+    )
+  };
+
+  const handleDuplicateTextBox = () => {
+    setTextBoxes(boxes => {
+      const activeBox = boxes.find(box => box.id === activeState);
+      if(!activeBox) return boxes;
+
+      const newBox: TextBox = {
+        ...activeBox,
+        id: nextIdRef.current++,
+        x: activeBox.x + 20,
+        y: activeBox.y + 20
+      }
+
+      return [...boxes, newBox];
+    });
+
+    setActiveState(nextIdRef.current - 1);
+  }
+
+  const handleTextChange = (id: number, text: string) => {
+    updateTextBoxText(setTextBoxes, id, text);
+  };
 
   return (
     <div>
       {
         openEditingBar &&
         <EditingBar
-          strokeColor={getActiveTextBoxColor()}
+          strokeColor={getActiveTextBoxColor(textBoxes, activeState)}
           setStrokeColor={handleColorChange}
           ref={editingBarRef}
-          fontSize={getActiveTextBoxSize()}
+          fontSize={getActiveTextBoxSize(textBoxes, activeState)}
           setFontSize={handleSizeChange}
-          textAlignment={getActiveTextAlign()}
+          textAlignment={getActiveTextAlign(textBoxes, activeState)}
           setTextAlignment={handleTextAlign}
+          opacity={getActiveTextBoxOpacity(textBoxes, activeState)}
+          setOpacity={handleOpacityChange}
+          handleDelete={handleDeleteTextBox}
+          handleDuplicate={handleDuplicateTextBox}
         />
       }
       <div>
@@ -270,16 +264,18 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
           grabber={grabber}
           onClick={() => setOpenEditingBar(true)}
           onFocus={() => setOpenEditingBar(true)}
+          onChange={(text: string) => handleTextChange(textBox.id, text)}
+          value={textBox.text || ""}
           position={{ x: textBox.x, y: textBox.y }}
-          onPositionChange={(x: number, y: number) => updateTextBoxPosition(textBox.id, x, y)}
+          onPositionChange={(x: number, y: number) => updateTextBoxPosition(setTextBoxes, textBox.id, x, y)}
           onRemove={() => removeTextBox(textBox.id)}
-          onColorChange={(color: string) => updateTextBoxColor(textBox.id, color)}
+          onColorChange={(color: string) => updateTextBoxColor(setTextBoxes, textBox.id, color)}
           setOpenEditingBar={setOpenEditingBar}
           editingBarRef={editingBarRef}
           style={{
             position: "absolute",
             left: textBox.x,
-            color: textBox.color || "black",
+            color: `${textBox.color || "black"}${Math.round((textBox.opacity[0] / 100) * 255).toString(16).padStart(2, '0')}`,
             fontSize: FONT_SIZE_MAP[textBox.fontSize],
             top: textBox.y,
             textAlign: textBox.text_align || "start"

@@ -34,9 +34,10 @@ function Textarea({
   editingBarRef,
   setOpenEditingBar,
   style: parentStyle,
+  value,
+  onChange,
   ...props
 }: TextareaProps) {
-  const [textBoxContent, setTextBoxContent] = React.useState('');
   const [clickCount, setClickCount] = React.useState(0);
   const dragTextBox = React.useRef(false);
   const dragResize = React.useRef(false);
@@ -47,6 +48,8 @@ function Textarea({
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
   const cornerSize = 10;
+
+  const textBoxContent = value || '';
 
   React.useEffect(() => {
     setTimeout(() => {
@@ -215,7 +218,7 @@ function Textarea({
       }}
 
       value={textBoxContent}
-      onChange={(e) => setTextBoxContent(e.target.value)}
+      onChange={(e) => onChange?.(e.target.value)}
       onMouseDown={onTextMouseDown}
       onMouseUp={onTextMouseUp}
       onMouseMove={onTextMouseMove}
