@@ -24,8 +24,8 @@ type ToolConfig = {
 
 
 const tools: ToolConfig[] = [
-  { id: "pan", icon: Hand, grab: true },
-  { id: "select", icon: LucideMousePointerClick, grab: false },
+  { id: "pan", icon: Hand },
+  { id: "select", icon: LucideMousePointerClick },
   { id: "rect", icon: RectangleHorizontal },
   { id: "diamond", icon: Diamond },
   { id: "circle", icon: Circle },
@@ -55,13 +55,43 @@ const ToolButton = ({ children, handleClick, active }: { children: React.ReactNo
 
 export function Navbar(
   {
-    setGrab
+    setGrab,
+    setCircle,
+    setRectangle,
+    setLine,
   }:
     {
       setGrab: Dispatch<SetStateAction<boolean>>
+      setCircle: Dispatch<SetStateAction<boolean>>
+      setRectangle: Dispatch<SetStateAction<boolean>>
+      setLine: Dispatch<SetStateAction<boolean>>
     }
 ) {
   const [activeTool, setActiveTool] = useState<Tool>("select");
+
+  const handleToolClick = (tool: Tool) => {
+    setGrab(false);
+    setCircle(false);
+    setRectangle(false);
+    setLine(false);
+    setActiveTool(tool);
+    switch (tool) {
+      case "pan":
+        setGrab(true);
+        break;
+      case "circle":
+        setCircle(true);
+        break;
+      case "rect":
+        setRectangle(true);
+        break;
+      case "line":
+        setLine(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div
@@ -80,14 +110,11 @@ export function Navbar(
       </div>
 
       <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg shadow-lg mt-2">
-        {tools.map(({ id, icon: Icon, grab }) => (
+        {tools.map(({ id, icon: Icon }) => (
           <ToolButton
             key={id}
             active={activeTool === id}
-            handleClick={() => {
-              setActiveTool(id)
-              setGrab(grab ?? false)
-            }}
+            handleClick={() => handleToolClick(id)}
           >
             <Icon size={18} />
           </ToolButton>

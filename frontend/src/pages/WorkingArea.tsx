@@ -1,27 +1,22 @@
 import { EditingBar } from "@/components/EditingBar";
 import { Textarea } from "@/components/ui/textarea";
-import { getActiveTextAlign, getActiveTextBoxColor, getActiveTextBoxOpacity, getActiveTextBoxSize, updateTextAlignment, updateTextBoxColor, updateTextBoxPosition, updateTextBoxText, updateTextOpacity, updateTextSize } from "@/lib/updateStyles";
+import { FONT_SIZE_MAP, type TextBox } from "@/lib/interfaces/working-area-interface";
+import { 
+  getActiveTextAlign, 
+  getActiveTextBoxColor, 
+  getActiveTextBoxOpacity, 
+  getActiveTextBoxSize, 
+  handleColorChange, 
+  handleDeleteTextBox, 
+  handleDuplicateTextBox, 
+  handleOpacityChange, 
+  handleSizeChange, 
+  handleTextAlign, 
+  handleTextChange, 
+  updateTextBoxColor, 
+  updateTextBoxPosition 
+} from "@/lib/updateStyles";
 import { useEffect, useRef, useState } from "react";
-
-export interface TextBox {
-  id: number;
-  text: string | null;
-  x: number;
-  y: number;
-  color: string;
-  fontSize: string;
-  text_align: React.CSSProperties["textAlign"];
-  opacity: number[]
-}
-
-const FONT_SIZE_MAP: Record<FontSize, string> = {
-  small: "12px",
-  large: "16px",
-  "x-large": "20px",
-  "xx-large": "24px",
-};
-
-type FontSize = (string)[number];
 
 export function WorkingArea({ grabber }: { grabber: boolean }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -165,64 +160,12 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
     const y = e.clientY - rect.top;
 
     const newId = nextIdRef.current++;
-    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg", text_align: "start", opacity: [100], text: "" as const }]);
+    setTextBoxes(boxes => [...boxes, { id: newId, x, y, color: "#000000", fontSize: "lg", text_align: "start", opacity: [100], text: "", size: 1 }]);
   }
 
   const removeTextBox = (id: number) => {
     setTextBoxes(boxes => boxes.filter(box => box.id != id))
   }
-
-  const handleColorChange = (color: string) => {
-    if (activeState !== null) {
-      updateTextBoxColor(setTextBoxes, activeState, color);
-    }
-  };
-
-  const handleSizeChange = (fontSize: string) => {
-    if (activeState !== null) {
-      updateTextSize(setTextBoxes, activeState, fontSize);
-    }
-  };
-
-  const handleTextAlign = (text_align: React.CSSProperties["textAlign"]) => {
-    if (activeState !== null) {
-      updateTextAlignment(setTextBoxes, activeState, text_align);
-    }
-  };
-
-  const handleOpacityChange = (opacity: number[]) => {
-    if (activeState != null) {
-      updateTextOpacity(setTextBoxes, activeState, opacity);
-    }
-  }
-
-  const handleDeleteTextBox = () => {
-    setTextBoxes(boxes => 
-      boxes.filter(box => box.id !== activeState)
-    )
-  };
-
-  const handleDuplicateTextBox = () => {
-    setTextBoxes(boxes => {
-      const activeBox = boxes.find(box => box.id === activeState);
-      if(!activeBox) return boxes;
-
-      const newBox: TextBox = {
-        ...activeBox,
-        id: nextIdRef.current++,
-        x: activeBox.x + 20,
-        y: activeBox.y + 20
-      }
-
-      return [...boxes, newBox];
-    });
-
-    setActiveState(nextIdRef.current - 1);
-  }
-
-  const handleTextChange = (id: number, text: string) => {
-    updateTextBoxText(setTextBoxes, id, text);
-  };
 
   return (
     <div>
@@ -230,16 +173,16 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
         openEditingBar &&
         <EditingBar
           strokeColor={getActiveTextBoxColor(textBoxes, activeState)}
-          setStrokeColor={handleColorChange}
+          setStrokeColor={(color) => handleColorChange(color, setTextBoxes, activeState)}
           ref={editingBarRef}
           fontSize={getActiveTextBoxSize(textBoxes, activeState)}
-          setFontSize={handleSizeChange}
+          setFontSize={(fontSize) => handleSizeChange(fontSize, setTextBoxes, activeState)}
           textAlignment={getActiveTextAlign(textBoxes, activeState)}
-          setTextAlignment={handleTextAlign}
+          setTextAlignment={(textAlignment) => handleTextAlign(textAlignment, setTextBoxes, activeState)}
           opacity={getActiveTextBoxOpacity(textBoxes, activeState)}
-          setOpacity={handleOpacityChange}
-          handleDelete={handleDeleteTextBox}
-          handleDuplicate={handleDuplicateTextBox}
+          setOpacity={(opacity) => handleOpacityChange(opacity, setTextBoxes, activeState)}
+          handleDelete={() => handleDeleteTextBox(setTextBoxes, activeState)}
+          handleDuplicate={() => handleDuplicateTextBox(setTextBoxes, activeState, nextIdRef)}
         />
       }
       <div>
@@ -264,7 +207,7 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
           grabber={grabber}
           onClick={() => setOpenEditingBar(true)}
           onFocus={() => setOpenEditingBar(true)}
-          onChange={(text: string) => handleTextChange(textBox.id, text)}
+          onChange={(text: string) => handleTextChange(textBox.id, text, setTextBoxes)}
           value={textBox.text || ""}
           position={{ x: textBox.x, y: textBox.y }}
           onPositionChange={(x: number, y: number) => updateTextBoxPosition(setTextBoxes, textBox.id, x, y)}
@@ -275,6 +218,7 @@ export function WorkingArea({ grabber }: { grabber: boolean }) {
           style={{
             position: "absolute",
             left: textBox.x,
+            transform: `scale(${textBox.size})`,
             color: `${textBox.color || "black"}${Math.round((textBox.opacity[0] / 100) * 255).toString(16).padStart(2, '0')}`,
             fontSize: FONT_SIZE_MAP[textBox.fontSize],
             top: textBox.y,

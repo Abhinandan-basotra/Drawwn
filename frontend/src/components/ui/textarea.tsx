@@ -1,24 +1,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
-
-interface TextareaProps {
-  className?: string;
-  activeState?: number | null;
-  setActiveState?: (id: number | null) => void;
-  setTextBoxes?: React.Dispatch<React.SetStateAction<any[]>>;
-  grabber?: boolean;
-  id?: number;
-  onRemove?: () => void;
-  onColorChange?: (color: string) => void;
-  position?: { x: number; y: number };
-  strokeColor?: string;
-  onPositionChange?: (x: number, y: number) => void;
-  editingBarRef?: React.RefObject<HTMLElement | null>;
-  setOpenEditingBar?: (open: boolean) => void;
-  style?: React.CSSProperties;
-  [key: string]: any;
-}
+import type { TextareaProps } from "@/lib/interfaces/textarea-interface";
 
 function Textarea({
   className,
@@ -144,7 +127,13 @@ function Textarea({
           const newScale = prev + delta;
           return Math.max(0.3, Math.min(5, newScale));
         });
-
+        setTextBoxes?.((boxes) =>
+          boxes.map(box =>
+            box.id === id
+              ? { ...box, size: scale }
+              : box
+          )
+        );
         lastResizePos.current = { x: e.clientX, y: e.clientY };
       }
     };
@@ -212,7 +201,6 @@ function Textarea({
       )}
       style={{
         ...parentStyle,
-        transform: `scale(${scale})`,
         transformOrigin: 'top left',
         transition: 'transform 0.1s ease-out',
       }}

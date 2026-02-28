@@ -1,4 +1,4 @@
-import type { TextBox } from "@/pages/WorkingArea";
+import type { TextBox } from "./interfaces/working-area-interface";
 
 //get states
 export const getActiveTextBoxColor = (textBoxes: TextBox[], activeState: number | null) => {
@@ -69,3 +69,56 @@ export const updateTextBoxText = (setTextBoxes: React.Dispatch<React.SetStateAct
         )
     )
 }
+
+//handle
+export const handleColorChange = (color: string, setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null) => {
+    if (activeState !== null) {
+        updateTextBoxColor(setTextBoxes, activeState, color);
+    }
+};
+
+export const handleSizeChange = (fontSize: string, setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null) => {
+    if (activeState !== null) {
+        updateTextSize(setTextBoxes, activeState, fontSize);
+    }
+};
+
+export const handleTextAlign = (text_align: React.CSSProperties["textAlign"], setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null) => {
+    if (activeState !== null) {
+        updateTextAlignment(setTextBoxes, activeState, text_align);
+    }
+};
+
+export const handleOpacityChange = (opacity: number[], setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null) => {
+    if (activeState != null) {
+        updateTextOpacity(setTextBoxes, activeState, opacity);
+    }
+}
+
+export const handleDeleteTextBox = (setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null) => {
+    setTextBoxes(boxes =>
+        boxes.filter(box => box.id !== activeState)
+    )
+};
+
+export const handleDuplicateTextBox = (setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>, activeState: number | null, nextIdRef: React.MutableRefObject<number>) => {
+    setTextBoxes(boxes => {
+        const activeBox = boxes.find(box => box.id === activeState);
+        if (!activeBox) return boxes;
+
+        const newBox: TextBox = {
+            ...activeBox,
+            id: nextIdRef.current++,
+            x: activeBox.x + 20,
+            y: activeBox.y + 20
+        }
+
+        return [...boxes, newBox];
+    });
+
+    activeState = nextIdRef.current - 1;
+}
+
+export const handleTextChange = (id: number, text: string, setTextBoxes: React.Dispatch<React.SetStateAction<TextBox[]>>) => {
+    updateTextBoxText(setTextBoxes, id, text);
+};
