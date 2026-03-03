@@ -18,3 +18,12 @@ export const FONT_SIZE_MAP: Record<FontSize, string> = {
 };
 
 export type FontSize = (string)[number];
+
+export type Rectangle = {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  stroke: string;
+};
